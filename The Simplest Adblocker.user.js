@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         The Simplest Adblocker
 // @namespace    https://kawamoto.no-ip.org/
-// @version      1.0
-// @description  Just removes all iframes.
+// @version      1.1
+// @description  Just removes all cross-origin and dynamically generated iframes.
 // @author       Suguru Kawamoto
 // @include      *
 // @grant        none
@@ -14,15 +14,20 @@
     'use strict';
 
     // Your code here...
-    new MutationObserver(function(){
+    let f = function(){
         Array.prototype.forEach.call(document.getElementsByTagName("iframe"), function(e){
             let s = getComputedStyle(e);
-            if(s.display != "none" && s.visibility == "visible" && s.opacity > 0 && s.width != 0 && s.height != 0){
-                e.src = "about:blank";
-                while(e.contentWindow.document.firstChild){
-                    e.contentWindow.document.removeChild(e.contentWindow.document.firstChild);
+            if(s.display != "none" && s.visibility == "visible" && s.opacity > 0){
+                if(!e.src){
+                    while(e.contentWindow.document.firstChild){
+                        e.contentWindow.document.removeChild(e.contentWindow.document.firstChild);
+                    }
+                }else if(new URL(e.src, location.href).hostname != document.domain){
+                    e.src = "about:blank";
                 }
             }
         });
-    }).observe(document, {subtree : true, childList : true});
+    };
+    new MutationObserver(f).observe(document, {subtree : true, childList : true});
+    f();
 })();
